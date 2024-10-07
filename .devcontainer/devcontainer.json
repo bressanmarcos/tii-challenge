@@ -1,0 +1,31 @@
+{
+    "name": "ROS DevContainer",
+    "build": {
+        "dockerfile": "../Dockerfile.ci",
+        "context": ".."
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-vscode.cpptools-extension-pack",
+                "ms-iot.vscode-ros",
+                "ms-azuretools.vscode-docker",
+                "ms-vscode.cmake-tools",
+                "eamodio.gitlens"
+            ],
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "terminal.integrated.shell.linux": "/bin/bash"
+            }
+        }
+    },
+    "mounts": [
+        "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+    ],
+    "remoteUser": "vscode",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/catkin_ws,type=bind",
+    "workspaceFolder": "/home/vscode/catkin_ws",
+    "postCreateCommand": "sudo groupadd docker || true && sudo usermod -aG docker vscode && sudo chgrp docker /var/run/docker.sock && bash -c 'source /opt/ros/noetic/setup.bash && catkin_make' && echo '[[ ! `id` == *docker* ]] && newgrp docker ; source /opt/ros/noetic/setup.bash && source /home/vscode/catkin_ws/devel/setup.bash' >> ~/.bashrc"
+}
+

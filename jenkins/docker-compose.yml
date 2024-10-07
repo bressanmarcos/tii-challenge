@@ -1,0 +1,34 @@
+volumes:
+  jenkins_home:
+
+services:
+  jenkins:
+    # build: . #  The Dockerfile in the same folder as this file image serves
+    # only as a reference for a fresh Jenkins installationß.
+
+    # The actual image (below) used for Jenkins infrastructure is generated from
+    # a frozen image that contains already all Jenkins plugins installed and
+    # pipelines configured. The instructions to generate such a frozen image are
+    # not included in this repository.
+    image: bressanmarcos/jenkins-tii-challenge:latest
+    restart: always
+    container_name: jenkins
+    user: root
+    privileged: true
+    ports:
+      - "8080:8080"                      # Jenkins UI
+      - "50000:50000"                    # Jenkins agent port
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - jenkins-init
+
+  # This container is used to initialize the Jenkins instance. It is not
+  # persisted between restarts.
+  jenkins-init:
+    image: bressanmarcos/jenkins-tii-challenge:latest
+    container_name: jenkins-init
+    command: ["/bin/bash", "-c", "[[ ! -f /var/copied ]] && cp -Rp /var/jenkins_init/. /var/jenkins_home && touch /var/copied"]
+    volumes:
+      - jenkins_home:/var/jenkins_home
