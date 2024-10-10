@@ -1,9 +1,13 @@
 {
-    "name": "ROS Noetic DevContainer",
+    "name": "ROS DevContainer",
     "build": {
         "dockerfile": "Dockerfile",
         "context": ".."
     },
+    "runArgs": [
+        "-e", "DISPLAY=host.docker.internal:0",
+        "-v", "/tmp/.X11-unix:/tmp/.X11-unix"
+    ],
     "customizations": {
         "vscode": {
             "extensions": [
@@ -15,7 +19,8 @@
                 "eamodio.gitlens"
             ],
             "settings": {
-                "terminal.integrated.defaultProfile.linux": "bash"
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "terminal.integrated.shell.linux": "/bin/bash"
             }
         }
     },

@@ -1,4 +1,6 @@
-version: '3.8'
+volumes:
+  jenkins_home:
+  docker_data:
 
 services:
   jenkins:
@@ -27,7 +29,3 @@ services:
       DOCKER_TLS_CERTDIR: ""
     volumes:
       - docker_data:/var/lib/docker
-
-volumes:
-  jenkins_home:
-  docker_data:
