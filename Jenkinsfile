@@ -21,7 +21,7 @@ pipeline {
             steps {
                 script {
                     // Ensure the environment is set up for ROS and build the workspace
-                    sh """
+                    sh """#!/bin/bash
                         source /opt/ros/noetic/setup.bash
                         cd ${CATKIN_WS}
                         catkin_make
@@ -34,7 +34,7 @@ pipeline {
             steps {
                 script {
                     // Run tests within the workspace
-                    sh """
+                    sh """#!/bin/bash
                         source /opt/ros/noetic/setup.bash
                         source ${CATKIN_WS}/devel/setup.bash
                         cd ${CATKIN_WS}
@@ -54,7 +54,7 @@ pipeline {
             steps {
                 script {
                     // Run gzserver in headless mode, followed by launching nodes
-                    sh """
+                    sh """#!/bin/bash
                         source /opt/ros/noetic/setup.bash
                         source ${CATKIN_WS}/devel/setup.bash
                         cd ${CATKIN_WS}
