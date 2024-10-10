@@ -22,7 +22,7 @@ pipeline {
                 script {
                     // Ensure the environment is set up for ROS and build the workspace
                     sh """
-                        source /opt/ros/noetic/setup.bash
+                        . /opt/ros/noetic/setup.bash
                         cd ${CATKIN_WS}
                         catkin_make
                     """
@@ -35,8 +35,8 @@ pipeline {
                 script {
                     // Run tests within the workspace
                     sh """
-                        source /opt/ros/noetic/setup.bash
-                        source ${CATKIN_WS}/devel/setup.bash
+                        . /opt/ros/noetic/setup.bash
+                        . ${CATKIN_WS}/devel/setup.bash
                         cd ${CATKIN_WS}
                         catkin_make run_tests
                     """
@@ -55,8 +55,8 @@ pipeline {
                 script {
                     // Run gzserver in headless mode, followed by launching nodes
                     sh """
-                        source /opt/ros/noetic/setup.bash
-                        source ${CATKIN_WS}/devel/setup.bash
+                        . /opt/ros/noetic/setup.bash
+                        . ${CATKIN_WS}/devel/setup.bash
                         cd ${CATKIN_WS}
                         
                         # Run Gazebo server in headless mode
