@@ -23,7 +23,6 @@ pipeline {
                     // Ensure the environment is set up for ROS and build the workspace
                     sh """#!/bin/bash
                         source /opt/ros/noetic/setup.bash
-                        cd ${CATKIN_WS}
                         catkin_make
                     """
                 }
@@ -37,7 +36,6 @@ pipeline {
                     sh """#!/bin/bash
                         source /opt/ros/noetic/setup.bash
                         source ${CATKIN_WS}/devel/setup.bash
-                        cd ${CATKIN_WS}
                         catkin_make run_tests
                     """
                 }
@@ -57,7 +55,6 @@ pipeline {
                     sh """#!/bin/bash
                         source /opt/ros/noetic/setup.bash
                         source ${CATKIN_WS}/devel/setup.bash
-                        cd ${CATKIN_WS}
                         
                         # Run Gazebo server in headless mode
                         roslaunch my_robot simulation.launch gui:=false &
