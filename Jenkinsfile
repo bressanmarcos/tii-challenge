@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'ros:noetic-ros-base'  // Use the base ROS image
+            image 'ros-ci:latest'  // Use the base ROS image
             args '-v /var/run/docker.sock:/var/run/docker.sock'  // Bind Docker socket to allow Docker commands within container
         }
     }
