@@ -6,7 +6,6 @@ pipeline {
         }
     }
     environment {
-        CATKIN_WS = "/home/vscode/catkin_ws"
         HOME = "/home/vscode"
     }
     stages {
@@ -35,7 +34,7 @@ pipeline {
                     // Run tests within the workspace
                     sh """#!/bin/bash
                         source /opt/ros/noetic/setup.bash
-                        source ${CATKIN_WS}/devel/setup.bash
+                        source devel/setup.bash
                         catkin_make run_tests
                     """
                 }
@@ -54,7 +53,7 @@ pipeline {
                     // Run gzserver in headless mode, followed by launching nodes
                     sh """#!/bin/bash
                         source /opt/ros/noetic/setup.bash
-                        source ${CATKIN_WS}/devel/setup.bash
+                        source devel/setup.bash
                         
                         # Run Gazebo server in headless mode
                         roslaunch my_robot simulation.launch gui:=false &
