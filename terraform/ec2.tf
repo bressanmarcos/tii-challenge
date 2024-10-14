@@ -53,13 +53,16 @@ resource "aws_security_group" "this" {
   }
 }
 
+locals {
+  instance_ip = "10.0.1.10"
+}
 
 resource "aws_instance" "this" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = "t3a.medium"
   vpc_security_group_ids = [aws_security_group.this.id]
   subnet_id              = module.vpc.public_subnets[0]
-  private_ip             = "10.0.1.10"
+  private_ip             = local.instance_ip
 
   tags = {
     Name = "jenkins and gazebo"
@@ -68,17 +71,21 @@ resource "aws_instance" "this" {
   user_data = <<-USER_DATA
     #!/bin/bash
 
-    #######  Gazebo and ROS setup #######
-    # Install XFCE and TightVNC
+    # Install XFCE and TurboVNC
     apt-get update -y
     echo "set shared/default-x-display-manager lightdm" | debconf-communicate
-    apt-get install -y xfce4 xfce4-goodies lightdm tightvncserver
+    apt-get install -y xfce4 xfce4-goodies lightdm
 
-    # Set up VNC password for ubuntu user
+    # Download and install TurboVNC
+    wget https://sourceforge.net/projects/turbovnc/files/3.0.2/turbovnc_3.0.2_amd64.deb/download -O turbovnc.deb
+    dpkg -i turbovnc.deb
+    apt-get install -f -y  # Install any dependencies
+
+    # Set up VNC password for the ubuntu user
     su - ubuntu -c 'mkdir -p ~/.vnc && echo -n "ubuntu" | vncpasswd -f > ~/.vnc/passwd'
     chmod 600 /home/ubuntu/.vnc/passwd
 
-    # Create a VNC startup script for ubuntu user
+    # Create a VNC startup script for the ubuntu user
     su - ubuntu -c 'cat <<EOF > ~/.vnc/xstartup
     #!/bin/sh
     unset SESSION_MANAGER
@@ -87,10 +94,10 @@ resource "aws_instance" "this" {
     EOF'
     chmod +x /home/ubuntu/.vnc/xstartup
 
-    # Start the VNC server as ubuntu user at boot
+    # Start the TurboVNC server as ubuntu user at boot
     cat <<EOF > /etc/systemd/system/vncserver@.service
     [Unit]
-    Description=Start TightVNC server at startup
+    Description=Start TurboVNC server at startup
     After=syslog.target network.target
 
     [Service]
@@ -98,22 +105,22 @@ resource "aws_instance" "this" {
     User=ubuntu
     PAMName=login
     PIDFile=/home/ubuntu/.vnc/%H:%i.pid
-    ExecStartPre=-/usr/bin/vncserver -kill :%i > /dev/null 2>&1
-    ExecStart=/usr/bin/vncserver :%i
-    ExecStop=/usr/bin/vncserver -kill :%i
+    ExecStartPre=-/opt/TurboVNC/bin/vncserver -kill :%i > /dev/null 2>&1
+    ExecStart=/opt/TurboVNC/bin/vncserver :%i
+    ExecStop=/opt/TurboVNC/bin/vncserver -kill :%i
 
     [Install]
     WantedBy=multi-user.target
     EOF
     systemctl daemon-reload
     systemctl enable vncserver@1.service
-    su - ubuntu -c "vncserver :1"
+    su - ubuntu -c "/opt/TurboVNC/bin/vncserver :1"
 
     # Allow VNC through the firewall (if necessary)
     ufw allow 5901/tcp
 
     # install docker
-    curl -fsSL https://get.docker.com | bash
+    curl -fsSL https://get.docker.com | sh
     usermod -aG docker ubuntu
     systemctl enable --now docker
 
@@ -137,13 +144,15 @@ resource "aws_instance" "this" {
     su - ubuntu -c 'mkdir -p ~/.ssh && echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCeVsfidi90fu5/qkwJZfl0OtGksEUWV3EoYjnZeP7bp1SUByB2mnZioCClzlGIATSEICuInl/2l6wmG6Y6yolHa1bkP8UVPFpLuTAVtVN4kjuK9Rwcqa32tvucnfqtoWc8lb3ujymyOnHW4i8A66npu9HWXrGR4aimwZyMfa1Qbvoylf5cf0Lavy2OaKQ23jBtrWd6FDPShsWYSJYGXwpiRaIG41GGYOPJ92Fd2oJmqf8txFcdAQj1eOZEzY1PsHKG47oq0webnWyQhmDkY7YqlnpIlpHLIG+He52eLzegBBNhCGR3dhtCqe6e01OgP+Tc+PBAcQ1KBpYa0L3V0qJ8o+Cq4DLlp5glnrZezfBpQmo/ixiffszUypiMap0bjV3Juc3jROgBsqWZvKWf9CmkC/y98okXa8ITlOdBoFV3Y4W+3EiiPmQm0Tq97HHnORXNEHTjtYGPlKPoD14h2GWO3Y7iO/gDvE8Hostp857JleO394HnUEHk9sPWiLvOWDLO8vJh4qKRpkwL2LHEc5+g173tY/KrcyG5BPPY3Hk4KN4KN/8fDgAqe/UnM+Pp7G0XtuGwSjFJBPI4OLGDKyVe6rht8fjZTfgluPh+acsTiq6ZMOVuGTG+yWaeF9gKEBzn4aNNwACXtHaTvYlbT1Pelu2RmfGqdiHticv3KXu2ww== bressan@dee.ufc.br" >> ~/.ssh/authorized_keys'
     chmod 600 /home/ubuntu/.ssh/authorized_keys
 
-    
-    #######  Jenkins setup #######
+    # Setup Jenkins
     su - ubuntu -c 'bash -s' <<EOF
         newgrp docker
         cd ~
         git clone https://github.com/bressanmarcos/tii-challenge.git
         cd tii-challenge/jenkins
+        export GAZEBO_VM_USER=ubuntu
+        export GAZEBO_VM_HOST=${local.instance_ip}
+        export REMOTE_SIM_DIR=/home/ubuntu/tii-challenge
         docker compose up -d
     EOF
 

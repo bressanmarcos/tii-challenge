@@ -15,6 +15,10 @@ services:
     container_name: jenkins
     user: root
     privileged: true
+    environment:
+      - GAZEBO_VM_USER=${GAZEBO_VM_USER}
+      - GAZEBO_VM_HOST=${GAZEBO_VM_HOST}
+      - REMOTE_SIM_DIR=${REMOTE_SIM_DIR}
     ports:
       - "8080:8080"                      # Jenkins UI
       - "50000:50000"                    # Jenkins agent port

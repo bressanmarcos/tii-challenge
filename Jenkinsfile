@@ -6,9 +6,9 @@ pipeline {
         }
     }
     environment {
-        GAZEBO_VM_USER = 'ubuntu'
-        GAZEBO_VM_HOST = '10.0.1.10'
-        REMOTE_SIM_DIR = '/home/ubuntu/tii-challenge'
+        GAZEBO_VM_USER = "${env.GAZEBO_VM_USER}"
+        GAZEBO_VM_HOST = "${env.GAZEBO_VM_HOST}"
+        REMOTE_SIM_DIR = "${env.REMOTE_SIM_DIR}"
     }
     stages {
         
@@ -73,10 +73,15 @@ pipeline {
                             source devel/setup.bash
 
                             # Restart the Gazebo simulation with the updated code
-                            export DISPLAY=:0
+                            export DISPLAY=:1
                             pkill gzserver || true
                             pkill gzclient || true
-                            screen -dmS gazebo_session bash -c "roslaunch my_robot simulation.launch"
+                            roslaunch my_robot simulation.launch &
+
+                            # Only collect the first 10 seconds of simulation, then forget
+                            ros_pid=$!
+                            sleep 10
+                            disown $ros_pid
                         EOF
                     """
                 }
@@ -93,12 +98,6 @@ pipeline {
         }
     }
     post {
-        always {
-            // Clean up by killing any running ROS or Gazebo processes to prevent conflicts
-            sh 'pkill -f rosmaster || true'
-            sh 'pkill -f gzserver || true'
-            sh 'pkill -f gzclient || true'
-        }
         success {
             echo 'Build and deployment successful!'
         }
