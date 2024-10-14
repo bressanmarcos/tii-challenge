@@ -131,6 +131,10 @@ resource "aws_instance" "this" {
     rosdep init
     su - ubuntu -c "rosdep update"
 
+    # Add SSH key to authorized_keys for ubuntu user
+    su - ubuntu -c 'mkdir -p ~/.ssh && echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCeVsfidi90fu5/qkwJZfl0OtGksEUWV3EoYjnZeP7bp1SUByB2mnZioCClzlGIATSEICuInl/2l6wmG6Y6yolHa1bkP8UVPFpLuTAVtVN4kjuK9Rwcqa32tvucnfqtoWc8lb3ujymyOnHW4i8A66npu9HWXrGR4aimwZyMfa1Qbvoylf5cf0Lavy2OaKQ23jBtrWd6FDPShsWYSJYGXwpiRaIG41GGYOPJ92Fd2oJmqf8txFcdAQj1eOZEzY1PsHKG47oq0webnWyQhmDkY7YqlnpIlpHLIG+He52eLzegBBNhCGR3dhtCqe6e01OgP+Tc+PBAcQ1KBpYa0L3V0qJ8o+Cq4DLlp5glnrZezfBpQmo/ixiffszUypiMap0bjV3Juc3jROgBsqWZvKWf9CmkC/y98okXa8ITlOdBoFV3Y4W+3EiiPmQm0Tq97HHnORXNEHTjtYGPlKPoD14h2GWO3Y7iO/gDvE8Hostp857JleO394HnUEHk9sPWiLvOWDLO8vJh4qKRpkwL2LHEc5+g173tY/KrcyG5BPPY3Hk4KN4KN/8fDgAqe/UnM+Pp7G0XtuGwSjFJBPI4OLGDKyVe6rht8fjZTfgluPh+acsTiq6ZMOVuGTG+yWaeF9gKEBzn4aNNwACXtHaTvYlbT1Pelu2RmfGqdiHticv3KXu2ww== bressan@dee.ufc.br" >> ~/.ssh/authorized_keys'
+    chmod 600 /home/ubuntu/.ssh/authorized_keys
+
     USER_DATA
 }
 

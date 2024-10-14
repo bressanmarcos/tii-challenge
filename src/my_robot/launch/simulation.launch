@@ -1,14 +1,11 @@
 <launch>
   <!-- Arguments to control GUI and world file -->
-  <arg name="gui" default="true"/>
   <arg name="world" default="$(find gazebo_ros)/worlds/empty.world"/>
 
   <!-- Start Gazebo with the specified world file and GUI -->
-  <include file="$(find gazebo_ros)/launch/gzserver.launch">
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(arg world)"/>
   </include>
-
-  <include file="$(find gazebo_ros)/launch/gzclient.launch" if="$(arg gui)"/>
 
   <!-- Launch ROS nodes -->
   <node pkg="my_robot" type="talker" name="talker" output="screen" />
