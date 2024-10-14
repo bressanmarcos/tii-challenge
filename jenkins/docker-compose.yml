@@ -29,6 +29,6 @@ services:
   jenkins-init:
     image: bressanmarcos/jenkins-tii-challenge:latest
     container_name: jenkins-init
-    command: ["/bin/bash", "-c", "[[ ! -f /var/copied ]] && cp -Rp /var/jenkins_init/. /var/jenkins_home && touch /var/copied"]
+    command: ["/bin/bash", "-c", "[[ ! -f /var/jenkins_home/copied ]] && cp -Rp /var/jenkins_init/. /var/jenkins_home && touch /var/jenkins_home/copied"]
     volumes:
       - jenkins_home:/var/jenkins_home
