@@ -140,6 +140,7 @@ resource "aws_instance" "this" {
     
     #######  Jenkins setup #######
     su - ubuntu -c 'bash -s' <<EOF
+        newgrp docker
         cd ~
         git clone https://github.com/bressanmarcos/tii-challenge.git
         cd tii-challenge/jenkins
