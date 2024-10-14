@@ -5,6 +5,11 @@ pipeline {
             args '-v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
+    environment {
+        GAZEBO_VM_USER = 'ubuntu'
+        GAZEBO_VM_HOST = '10.0.1.10'
+        REMOTE_SIM_DIR = '/home/ubuntu/tii-challenge'
+    }
     stages {
         
         stage('Checkout') {
@@ -51,20 +56,28 @@ pipeline {
                 }
             }
         }
-        
-        stage('Deploy') {
+
+        stage('Deploy to Gazebo VM') {
             steps {
-                script {
-                    // Run gzserver in headless mode, followed by launching nodes
+                sshagent(credentials: ['ROS-GAZEBO-VM']) {
                     sh """#!/bin/bash
-                        source /opt/ros/noetic/setup.bash
-                        source devel/setup.bash
-                        
-                        # Run Gazebo server in headless mode
-                        roslaunch my_robot simulation.launch gui:=false &
-                        
-                        # Wait for simulation to initialize
-                        sleep 10
+                        ssh -o StrictHostKeyChecking=no ${GAZEBO_VM_USER}@${GAZEBO_VM_HOST} << EOF
+                            # Update the source code
+                            cd ${REMOTE_SIM_DIR} || (git clone https://github.com/bressanmarcos/tii-challenge.git ${REMOTE_SIM_DIR} && cd ${REMOTE_SIM_DIR})
+                            git checkout master
+                            git pull origin master
+
+                            # Build the workspace
+                            source /opt/ros/noetic/setup.bash
+                            catkin_make
+                            source devel/setup.bash
+
+                            # Restart the Gazebo simulation with the updated code
+                            export DISPLAY=:0
+                            pkill gzserver || true
+                            pkill gzclient || true
+                            screen -dmS gazebo_session bash -c "roslaunch my_robot simulation.launch"
+                        EOF
                     """
                 }
             }
