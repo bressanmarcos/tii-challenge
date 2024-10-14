@@ -5,6 +5,11 @@ pipeline {
             args '-v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
+    environment {
+        GAZEBO_VM_USER = "${env.GAZEBO_VM_USER}"
+        GAZEBO_VM_HOST = "${env.GAZEBO_VM_HOST}"
+        REMOTE_SIM_DIR = "${env.REMOTE_SIM_DIR}"
+    }
     stages {
         
         stage('Checkout') {
@@ -51,21 +56,35 @@ pipeline {
                 }
             }
         }
-        
-        stage('Deploy') {
+
+        stage('Deploy to Gazebo VM') {
             steps {
-                script {
-                    // Run gzserver in headless mode, followed by launching nodes
-                    sh """#!/bin/bash
-                        source /opt/ros/noetic/setup.bash
-                        source devel/setup.bash
-                        
-                        # Run Gazebo server in headless mode
-                        roslaunch my_robot simulation.launch gui:=false &
-                        
-                        # Wait for simulation to initialize
-                        sleep 10
-                    """
+                sshagent(credentials: ['ROS-GAZEBO-VM']) {
+                    sh '''#!/bin/bash
+                        ssh -o StrictHostKeyChecking=no ${GAZEBO_VM_USER}@${GAZEBO_VM_HOST} <<EOF
+                            # Update the source code
+                            git clone https://github.com/bressanmarcos/tii-challenge.git ${REMOTE_SIM_DIR} || true
+                            cd ${REMOTE_SIM_DIR}
+                            git checkout master
+                            git pull origin master
+
+                            # Build the workspace
+                            source /opt/ros/noetic/setup.bash
+                            catkin_make
+                            source devel/setup.bash
+
+                            # Restart the Gazebo simulation with the updated code
+                            export DISPLAY=:1
+                            pkill gzserver || true
+                            pkill gzclient || true
+                            roslaunch my_robot simulation.launch &
+
+                            # Only collect the first 10 seconds of simulation, then forget
+                            ros_pid=$!
+                            sleep 10
+                            disown $ros_pid
+                        EOF
+                    '''
                 }
             }
         }
@@ -80,12 +99,6 @@ pipeline {
         }
     }
     post {
-        always {
-            // Clean up by killing any running ROS or Gazebo processes to prevent conflicts
-            sh 'pkill -f rosmaster || true'
-            sh 'pkill -f gzserver || true'
-            sh 'pkill -f gzclient || true'
-        }
         success {
             echo 'Build and deployment successful!'
         }
